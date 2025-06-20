@@ -7,6 +7,10 @@ api_key = os.environ.get("GEMINI_API_KEY")
 from google import genai
 from google.genai import types
 
+# from subdirectory.filename import function_name
+from functions.get_files_info import get_files_info
+
+
 
 def main():
 #accept user input, exit if nothing passed
