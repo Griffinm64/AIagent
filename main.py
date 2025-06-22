@@ -1,47 +1,48 @@
-import os, sys
-from dotenv import load_dotenv
-
-load_dotenv()
-api_key = os.environ.get("GEMINI_API_KEY")
-
+import sys
+import os
 from google import genai
 from google.genai import types
-
-# from subdirectory.filename import function_name
-from functions.get_files_info import get_files_info
-
+from dotenv import load_dotenv
 
 
 def main():
-#accept user input, exit if nothing passed
-    try:
-        user_prompt = sys.argv[1]
-    except:
-        raise SystemExit(1)
+    load_dotenv()
 
-    messages = [
-        types.Content(role="user", parts=[types.Part(text=user_prompt) ]),
-    ]
+    verbose = "--verbose" in sys.argv
+    args = [arg for arg in sys.argv[1:] if not arg.startswith("--")]
 
+    if not args:
+        print("AI Code Assistant")
+        print('\nUsage: python main.py "your prompt here" [--verbose]')
+        print('Example: python main.py "How do I build a calculator app?"')
+        sys.exit(1)
 
-    #calls api key from stored value
+    api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
 
-    #calls llm model and passes previous input
-    client_response = client.models.generate_content(
-        model='gemini-2.0-flash-001',
-        contents=messages)
+    user_prompt = " ".join(args)
+
+    if verbose:
+        print(f"User prompt: {user_prompt}\n")
+
+    messages = [
+        types.Content(role="user", parts=[types.Part(text=user_prompt)]),
+    ]
+
+    generate_content(client, messages, verbose)
 
 
-    #displays result. If verbose flag is passed include usage tokens.
-    print(client_response.text)
-    try:
-        if "--verbose" in sys.argv:
-            print(f"User prompt: {user_prompt}")
-            print(f"Prompt tokens: {client_response.usage_metadata.prompt_token_count}")
-            print(f"Response tokens: {client_response.usage_metadata.candidates_token_count}")
-    except:
-        pass
+def generate_content(client, messages, verbose):
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-001",
+        contents=messages,
+    )
+    if verbose:
+        print("Prompt tokens:", response.usage_metadata.prompt_token_count)
+        print("Response tokens:", response.usage_metadata.candidates_token_count)
+    print("Response:")
+    print(response.text)
+
 
 if __name__ == "__main__":
     main()
